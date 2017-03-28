@@ -14,12 +14,12 @@ namespace ReactiveExtentionsTest
         {
             InitializeComponent();
 
+            //initilize the picture box and paint a red boxinsideto indicate input filter area
+            InitializePictureBox();
+
             //wire up the events as an obeservable stream
             IObservable<EventPattern<MouseEventArgs>> move =
                 Observable.FromEventPattern<MouseEventArgs>(picInput, "MouseMove");
-
-            IObservable<EventPattern<PaintEventArgs>> paint =
-                Observable.FromEventPattern<PaintEventArgs>(picInput, "Paint");
 
             //filter only the points inside our rectangle and when mouse is pressed
             IObservable<System.Drawing.Point> points = from evt in move
@@ -29,12 +29,25 @@ namespace ReactiveExtentionsTest
                                                        evt.EventArgs.Location.Y <= picInput.Height * 0.9)) &&
                                                        evt.EventArgs.Button == MouseButtons.Left
                                                        select evt.EventArgs.Location;
-
-            //draw rectangle
-            paint.Subscribe(o => DrawRectangle(o.EventArgs.Graphics));
-
             //draw point
+
+            //uncomment to add a delay
+            //points.Delay(TimeSpan.FromSeconds(1)).Subscribe(o => DrawPoint(o));
+
             points.Subscribe(o => DrawPoint(o));
+        }
+
+        private void InitializePictureBox()
+        {
+            //create a new bitmap
+            Bitmap bmp = new Bitmap(picInput.Width, picInput.Height);
+
+            using (var g = Graphics.FromImage(bmp))
+            {
+                DrawRectangle(g);
+
+                picInput.Image = bmp; //assign the picturebox.Image property to the bitmap created
+            }
         }
 
         private void DrawRectangle(Graphics g)
@@ -45,16 +58,9 @@ namespace ReactiveExtentionsTest
 
         private void DrawPoint(Point pos)
         {
-            lstPoints.Items.Add($"Point X({pos.X}) Y({pos.Y})");
-            lstPoints.SelectedIndex = lstPoints.Items.Count - 1;
-
-            if (picInput.Image == null)//if no available bitmap exists on the picturebox to draw on
-            {
-                //create a new bitmap
-                Bitmap bmp = new Bitmap(picInput.Width, picInput.Height);
-
-                picInput.Image = bmp; //assign the picturebox.Image property to the bitmap created
-            }
+            this.Invoke((MethodInvoker)delegate {
+                LogPoint(pos);
+            });
 
             using (Graphics g = Graphics.FromImage(picInput.Image))
             {//we need to create a Graphics object to draw on the picture box, its our main tool
@@ -67,6 +73,12 @@ namespace ReactiveExtentionsTest
 
                 picInput.Invalidate();//refreshes the picturebox
             }
+        }
+
+        private void LogPoint(Point pos)
+        {
+            lstPoints.Items.Add($"Point X({pos.X}) Y({pos.Y})");
+            lstPoints.SelectedIndex = lstPoints.Items.Count - 1;
         }
     }
 }
