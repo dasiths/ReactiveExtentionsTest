@@ -42,7 +42,6 @@
             this.picInput.Size = new System.Drawing.Size(481, 384);
             this.picInput.TabIndex = 0;
             this.picInput.TabStop = false;
-            this.picInput.Paint += new System.Windows.Forms.PaintEventHandler(this.picInput_Paint);
             // 
             // label1
             // 

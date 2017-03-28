@@ -1,15 +1,10 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
 using System.Data;
 using System.Drawing;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Forms;
-using System.Reactive.Disposables;
-using System.Reactive.Linq;
 using System.Reactive;
+using System.Reactive.Linq;
+using System.Windows.Forms;
 
 namespace ReactiveExtentionsTest
 {
@@ -23,6 +18,9 @@ namespace ReactiveExtentionsTest
             IObservable<EventPattern<MouseEventArgs>> move =
                 Observable.FromEventPattern<MouseEventArgs>(picInput, "MouseMove");
 
+            IObservable<EventPattern<PaintEventArgs>> paint =
+                Observable.FromEventPattern<PaintEventArgs>(picInput, "Paint");
+
             //filter only the points inside our rectangle and when mouse is pressed
             IObservable<System.Drawing.Point> points = from evt in move
                                                        where ((evt.EventArgs.Location.X >= picInput.Width * 0.1 &&
@@ -31,19 +29,21 @@ namespace ReactiveExtentionsTest
                                                        evt.EventArgs.Location.Y <= picInput.Height * 0.9)) &&
                                                        evt.EventArgs.Button == MouseButtons.Left
                                                        select evt.EventArgs.Location;
-            points.Subscribe(o => DrawOutput(o));
+
+            //draw rectangle
+            paint.Subscribe(o => DrawRectangle(o.EventArgs.Graphics));
+
+            //draw point
+            points.Subscribe(o => DrawPoint(o));
         }
 
-        private void picInput_Paint(object sender, PaintEventArgs e)
+        private void DrawRectangle(Graphics g)
         {
-
-            //draw a rectangle 80% of the size of the picture box asour input area
-            e.Graphics.DrawRectangle(Pens.Red, new Rectangle(
-                (int)(picInput.Width * 0.1), (int)(picInput.Height * 0.1),
-                            (int)(picInput.Width * 0.8), (int)(picInput.Height * 0.8)));
+            g.DrawRectangle(Pens.Red, new Rectangle((int)(picInput.Width * 0.1), (int)(picInput.Height * 0.1),
+                (int)(picInput.Width * 0.8), (int)(picInput.Height * 0.8)));
         }
 
-        private void DrawOutput(Point pos)
+        private void DrawPoint(Point pos)
         {
             lstPoints.Items.Add($"Point X({pos.X}) Y({pos.Y})");
             lstPoints.SelectedIndex = lstPoints.Items.Count - 1;
